@@ -42,10 +42,11 @@ extractWord remainderSet word =
   where wordSet = toMatchSet word
 
 unfoldAnagram :: Dictionary -> Anagram -> (Anagram, [Anagram])
-unfoldAnagram dictionary anagramSoFar@(wordsSoFar,remainderSoFar) =
-  (anagramSoFar,bar)
-  where bar = mapMaybe g dictionary
-        g newWord =
+unfoldAnagram dictionary anagram@(wordsSoFar,remainderSoFar) =
+  (anagram,anagrams')
+  where anagrams' =
+          mapMaybe anagramStep dictionary
+        anagramStep newWord =
           case extractWord remainderSoFar newWord of
             Nothing -> Nothing
             Just newRemainder ->
@@ -54,7 +55,7 @@ unfoldAnagram dictionary anagramSoFar@(wordsSoFar,remainderSoFar) =
 anagrams :: Dictionary -> Word -> [[Word]]
 anagrams dictionary word =
   map fst $
-  filter (\(_,remainder) -> MS.null remainder) $
+  filter (MS.null . snd) $
   Tree.flatten $
   Tree.unfoldTree (unfoldAnagram dictionary)
                   ([],toMatchSet word)
