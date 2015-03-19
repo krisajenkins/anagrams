@@ -14,43 +14,43 @@ import qualified Data.Text.IO        as TIO
 import qualified Data.Tree           as Tree
 import           System.Environment
 
-type Dictionary = [Text]
-type Remainder = MS.MultiSet Char
 type Word = Text
-type Anagram = (MS.MultiSet Word, Remainder)
+type Dictionary = [Word]
+type LetterSet = MS.MultiSet Char
+type AnagramStep = (MS.MultiSet Word, LetterSet)
 
-dullWord :: Word -> Bool
-dullWord "a" = False
-dullWord "i" = False
-dullWord s = T.length s <= 1
+interestingWord :: Word -> Bool
+interestingWord "a" = True
+interestingWord "i" = True
+interestingWord s = T.length s > 1
 
 loadDictionary :: FilePath -> IO Dictionary
 loadDictionary file =
   (sortBy (flip (comparing T.length)) .
-   filter (not . dullWord) .
+   filter interestingWord .
    T.lines) <$>
   TIO.readFile file
 
-toMatchSet :: Word -> Remainder
-toMatchSet = MS.fromList . T.unpack . T.toLower
+toLetterSet :: Word -> LetterSet
+toLetterSet = MS.fromList . T.unpack . T.toLower
 
-extractWord :: Remainder -> Word -> Maybe Remainder
-extractWord remainderSet word =
-  if MS.isSubsetOf wordSet remainderSet
-     then Just (MS.difference remainderSet wordSet)
+extractWord :: LetterSet -> Word -> Maybe LetterSet
+extractWord letterSet word =
+  if MS.isSubsetOf wordSet letterSet
+     then Just (MS.difference letterSet wordSet)
      else Nothing
-  where wordSet = toMatchSet word
+  where wordSet = toLetterSet word
 
-unfoldAnagram :: Dictionary -> Anagram -> (Anagram, [Anagram])
-unfoldAnagram dictionary anagram@(wordsSoFar,remainderSoFar) =
+unfoldAnagram :: Dictionary -> AnagramStep -> (AnagramStep, [AnagramStep])
+unfoldAnagram dictionary anagram@(wordsSoFar,letterSetSoFar) =
   (anagram,anagrams')
   where anagrams' =
           mapMaybe anagramStep dictionary
         anagramStep newWord =
-          case extractWord remainderSoFar newWord of
+          case extractWord letterSetSoFar newWord of
             Nothing -> Nothing
-            Just newRemainder ->
-              Just (MS.insert newWord wordsSoFar,newRemainder)
+            Just newLetterSet ->
+              Just (MS.insert newWord wordsSoFar,newLetterSet)
 
 anagrams :: Dictionary -> Word -> [[Word]]
 anagrams dictionary word =
@@ -58,11 +58,13 @@ anagrams dictionary word =
   filter (MS.null . snd) $
   Tree.flatten $
   Tree.unfoldTree (unfoldAnagram dictionary)
-                  (MS.empty,toMatchSet word)
+                  (MS.empty,toLetterSet word)
 
 main :: IO ()
 main =
   do [phrase] <- getArgs
      ws <- loadDictionary "/usr/share/dict/words"
      mapM_ (putStrLn . T.unpack . T.unwords) $
-       anagrams ws (T.pack $ filter (not . isSpace) phrase)
+       anagrams ws
+                (T.pack $
+                 filter (not . isSpace) phrase)
