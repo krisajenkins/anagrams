@@ -31,12 +31,15 @@ loadDictionary file =
    T.lines) <$>
   TIO.readFile file
 
+toMatchSet :: Word -> Remainder
+toMatchSet = MS.fromList . T.unpack . T.toLower
+
 extractWord :: Remainder -> Word -> Maybe Remainder
 extractWord remainderSet word =
   if MS.isSubsetOf wordSet remainderSet
      then Just (MS.difference remainderSet wordSet)
      else Nothing
-  where wordSet = MS.fromList (T.unpack $ T.toLower word)
+  where wordSet = toMatchSet word
 
 unfoldAnagram :: Dictionary -> Anagram -> (Anagram, [Anagram])
 unfoldAnagram dictionary anagramSoFar@(wordsSoFar,remainderSoFar) =
@@ -48,14 +51,13 @@ unfoldAnagram dictionary anagramSoFar@(wordsSoFar,remainderSoFar) =
             Just newRemainder ->
               Just (newWord : wordsSoFar,newRemainder)
 
-
 anagrams :: Dictionary -> Word -> [[Word]]
 anagrams dictionary word =
   map fst $
   filter (\(_,remainder) -> MS.null remainder) $
   Tree.flatten $
   Tree.unfoldTree (unfoldAnagram dictionary)
-                  ([],MS.fromList (T.unpack $ T.toLower word))
+                  ([],toMatchSet word)
 
 main :: IO ()
 main =
