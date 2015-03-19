@@ -58,7 +58,9 @@ executable anagram
 
   -- Other library packages from which modules are imported.
   build-depends:       base >=4.7 && <4.8
+                     , containers >= 0.5.5.1
                      , text >= 1.2.0.3
+                     , multiset >= 0.2.2
 
   -- Directories containing source files.
   -- hs-source-dirs:
