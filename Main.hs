@@ -17,7 +17,7 @@ import           System.Environment
 type Dictionary = [Text]
 type Remainder = MS.MultiSet Char
 type Word = Text
-type Anagram = ([Word], Remainder)
+type Anagram = (MS.MultiSet Word, Remainder)
 
 dullWord :: Word -> Bool
 dullWord "a" = False
@@ -50,15 +50,15 @@ unfoldAnagram dictionary anagram@(wordsSoFar,remainderSoFar) =
           case extractWord remainderSoFar newWord of
             Nothing -> Nothing
             Just newRemainder ->
-              Just (newWord : wordsSoFar,newRemainder)
+              Just (MS.insert newWord wordsSoFar,newRemainder)
 
 anagrams :: Dictionary -> Word -> [[Word]]
 anagrams dictionary word =
-  map fst $
+  map (MS.toList . fst) $
   filter (MS.null . snd) $
   Tree.flatten $
   Tree.unfoldTree (unfoldAnagram dictionary)
-                  ([],toMatchSet word)
+                  (MS.empty,toMatchSet word)
 
 main :: IO ()
 main =
