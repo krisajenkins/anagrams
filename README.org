@@ -4,4 +4,6 @@ Coded for West London Hack Night April 2015.
 
 ** Running
 
-Call =cabal run "some phrase or word"=
+#+BEGIN_SRC sh
+cabal run "some phrase or word"
+#+END_SRC
