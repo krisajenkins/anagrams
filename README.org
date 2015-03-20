@@ -1,5 +1,5 @@
 * Haskell Anagram Generator
-*
+
 Coded for West London Hack Night April 2015.
 
 ** Running
